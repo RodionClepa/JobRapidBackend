@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 import mysql.connector
 
 app = Flask(__name__)
@@ -21,7 +21,7 @@ def handle_bad_request(e):
 
 from controller.jobController import create_job_
 # POST: Create a new job
-@app.route("/jobs", methods=["POST"])
+@app.route("/api/jobs/post", methods=["POST"])
 def create_job():
     try:
         response = create_job_(mycursor, db)
@@ -31,27 +31,27 @@ def create_job():
 
 # GET: Retrieve all jobs
 from controller.jobController import get_all_jobs
-@app.route("/jobs", methods=["GET"])
+@app.route("/api/jobs/get", methods=["GET"])
 def get_jobs():
     try:
-        response = get_all_jobs(mycursor, db)
+        response = get_all_jobs(mycursor)
         return response
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving jobs: {err}")
 
 # GET: Retrieve a job by ID
 from controller.jobController import get_job_by_id
-@app.route("/jobs/<int:job_id>", methods=["GET"])
+@app.route("/api/jobs/get/<int:job_id>", methods=["GET"])
 def get_job(job_id):
     try:
-        response = get_job_by_id(mycursor, db, job_id, handle_bad_request)
+        response = get_job_by_id(mycursor, job_id, handle_bad_request)
         return response
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving job: {err}")
 
 # PUT: Update a job by ID
 from controller.jobController import update_job_by_id
-@app.route("/jobs/<int:job_id>", methods=["PUT"])
+@app.route("/api/jobs/update/<int:job_id>", methods=["PUT"])
 def update_job(job_id):
     try:
         response = update_job_by_id(mycursor, db, job_id)
@@ -61,7 +61,7 @@ def update_job(job_id):
 
 # DELETE: Delete a job by ID
 from controller.jobController import delete_job_by_id
-@app.route("/jobs/<int:job_id>", methods=["DELETE"])
+@app.route("/api/jobs/delete/<int:job_id>", methods=["DELETE"])
 def delete_job(job_id):
     try:
         response = delete_job_by_id(mycursor, db, job_id)
