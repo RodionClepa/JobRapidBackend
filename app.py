@@ -51,7 +51,7 @@ def get_job(job_id):
 
 # PUT: Update a job by ID
 from controller.jobController import update_job_by_id
-@app.route("/api/jobs/update/<int:job_id>", methods=["PUT"])
+@app.route("/api/jobs/put/<int:job_id>", methods=["PUT"])
 def update_job(job_id):
     try:
         response = update_job_by_id(mycursor, db, job_id)

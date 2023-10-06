@@ -8,7 +8,7 @@ def create_job_(mycursor, db):
                 INSERT INTO jobs (job_title, job_description, location, salary, application_deadline, job_email, job_phone)
                 VALUES (%s, %s, %s, %s, STR_TO_DATE(%s, '%d-%m-%Y'), %s, %s)
             """
-    values = (json_request())
+    values = json_request()
     mycursor.execute(sql, values)
     db.commit()
 
@@ -53,7 +53,7 @@ def get_job_by_id(mycursor, job_id, handle_bad_request):
         return handle_bad_request("Job not found")
 
 
-def update_job_by_id(mycursor, db, job_id):
+def update_job_by_id(mycursor, db, job_id: int):
         # Update the job data in the database
         sql = """
             UPDATE jobs
@@ -61,7 +61,7 @@ def update_job_by_id(mycursor, db, job_id):
                 application_deadline = STR_TO_DATE(%s, '%d-%m-%Y'), job_email = %s, job_phone = %s
             WHERE job_id = %s
         """
-        values = (json_request(), job_id)
+        values = json_request() + (job_id,)
         mycursor.execute(sql, values)
         db.commit()
 
