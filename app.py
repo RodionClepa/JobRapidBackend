@@ -24,7 +24,7 @@ from controller.jobController import create_job_
 @app.route("/api/jobs/post", methods=["POST"])
 def create_job():
     try:
-        response = create_job_(mycursor, db)
+        response = create_job_(mycursor, db, request)
         return response
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error creating job: {err}")
