@@ -17,8 +17,6 @@ db = mysql.connector.connect(
 
 mycursor = db.cursor()
 
-app = Flask(__name__)
-
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
 
@@ -124,3 +122,4 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 def allowed_file(filename):
     return '.' in filename and \
             filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+

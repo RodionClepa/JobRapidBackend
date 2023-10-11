@@ -160,5 +160,3 @@ def update_avatar_filename(mycursor, db, id, filename):
     mycursor.execute(sql, values)
     db.commit()
     return {"message": "Successfully updated"}
-
-    
