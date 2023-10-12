@@ -1,5 +1,4 @@
 from flask import Flask, request, jsonify
-from datetime import datetime
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
 import os
 import math
@@ -12,8 +11,7 @@ db = mysql.connector.connect(
     host='localhost',
     user="root",
     passwd='radu',
-    database='jobrapid'
-)
+    database='jobrapid')
 
 mycursor = db.cursor()
 
@@ -39,11 +37,6 @@ def login_handler():
     else:
         return jsonify({"token": response["token"]})
 
-
-@jwt.invalid_token_loader
-def my_invalid_token_callback(invalid_token):
-    return jsonify({"error": "Invalid token"})
-
 from controller.userController import verify_user
 @app.route("/api/users/verify", methods=['GET'])
 @jwt_required()
@@ -54,12 +47,10 @@ def verify_handler():
     else:
         return response
 
-from flask import send_from_directory
 from controller.userController import get_info
 @app.route("/api/users/getinfo", methods=['GET'])
 def get_info_handler():
     response = verify_handler()
-    # print(response)
     if response == "Invalid token":
         return jsonify({"error": response})
     response = get_info(mycursor, response["id"])
@@ -73,34 +64,6 @@ def encode_image_as_base64(image_path):
     with open(image_path, 'rb') as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
     return encoded_image
-
-# http://127.0.0.1:5000/api/users/page?page_num=4&criteria=first_name&order=desc
-@app.route("/api/users/page", methods=['GET'])
-def get_users():
-    criteria = request.args.get('criteria', default='created', type=str)
-    order = request.args.get('order', default="ASC", type=str)
-    page_num = request.args.get('page_num', default=1, type=int)
-    records_per_page = 10
-    list_of_available_criterias = ["id", "email", "first_name", "last_name", "phone", "date_of_birth", "address", "gender", "skills", "created"]
-
-    mycursor.execute("SELECT COUNT(*) FROM user")
-    total_records = mycursor.fetchone()[0]
-
-    total_pages = math.ceil(total_records/records_per_page)
-    if(total_pages<page_num):
-        return jsonify({"error":"Invalid page number"})
-
-    if criteria not in list_of_available_criterias:
-        return jsonify({"error": "Invalid Request"})
-    mycursor.execute(f"SELECT * FROM user ORDER BY {criteria} {order} LIMIT {records_per_page} OFFSET %s", ((page_num-1)*10,))
-    column_names = [desc[0] for desc in mycursor.description]
-    result = [dict(zip(column_names, row)) for row in mycursor.fetchall()]
-    # result = mycursor.fetchall()
-    return jsonify({
-        "data": result,
-        "total_pages": total_pages,
-        "current_page": page_num
-    })
 
 from controller.userController import update_user
 @app.route("/api/users/update", methods=['PUT'])
@@ -116,10 +79,80 @@ def update_profil():
 
 
 UPLOAD_FOLDER = 'uploads'
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-def allowed_file(filename):
-    return '.' in filename and \
-            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# Custom error handler for JSON responses
+@app.errorhandler(400)
+def handle_bad_request(e):
+    response = jsonify(error=str(e))
+    response.status_code = 400
+    return response
 
+from controller.jobController import create_job_
+# POST: Create a new job
+@app.route("/api/jobs/post", methods=["POST"])
+def create_job():
+    response = verify_handler()
+    if response == "Invalid token":
+        return jsonify({"error": response})
+    try:
+        response = create_job_(mycursor, db, request, response['id'])
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error creating job: {err}")
+
+# GET: Retrieve all jobs
+# http://127.0.0.1:5000/api/jobs/page?criteria=created&order=ASC&page_num=3
+from controller.jobController import get_all_jobs
+@app.route("/api/jobs/page", methods=["GET"])
+def get_jobs():
+    try:
+        response = get_all_jobs(mycursor, request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving jobs: {err}")
+
+# GET: Retrieve a job by ID
+# http://127.0.0.1:5000/api/jobs/get/?job_id=120
+from controller.jobController import get_job_by_id
+@app.route("/api/jobs/get/", methods=["GET"])
+def get_job():
+    try:
+        response = get_job_by_id(mycursor, request, handle_bad_request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving job: {err}")
+
+# PUT: Update a job by ID
+# http://127.0.0.1:5000/api/jobs/put/?job_id=125
+from controller.jobController import update_job_by_id
+@app.route("/api/jobs/put/", methods=["PUT"])
+def update_job():
+    response = verify_handler()
+    if response == "Invalid token":
+        return jsonify({"error": response})
+    try:
+        response = update_job_by_id(mycursor, db, request, response["id"])
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error updating job: {err}")
+
+# DELETE: Delete a job by ID
+from controller.jobController import delete_job_by_id
+@app.route("/api/jobs/delete/", methods=["DELETE"])
+def delete_job():
+    response = verify_handler()
+    if response == "Invalid token":
+        return jsonify({"error": response})
+    try:
+        response = delete_job_by_id(mycursor, db, request, response["id"])
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error deleting job: {err}")
+
+@jwt.invalid_token_loader
+def my_invalid_token_callback(invalid_token):
+    return jsonify({"error": "Invalid token"})
+
+if __name__ == "__main__":
+    app.run(debug=True)
