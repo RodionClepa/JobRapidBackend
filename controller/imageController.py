@@ -26,3 +26,14 @@ def encode_image_as_base64(image_path):
     except FileNotFoundError:
         print(f"Error: File not found - {image_path}")
         return None
+    
+def delete_avatar(filename, folder_name):
+    try:
+        file_path = os.path.join(folder_name, filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return {"message": "Image deleted successfully"}
+        else:
+            return {"error": "File not found"}
+    except Exception as e:
+        return {"error": str(e)}

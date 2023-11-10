@@ -1,10 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
 import os
-import math
 from flask_cors import CORS
 import mysql.connector
-import base64
 from controller.userController import (
     register_user,
     login_user,
@@ -24,6 +22,9 @@ from controller.jobController import (
     get_job_by_id,
     update_job_by_id,
     delete_job_by_id,
+)
+from controller.imageController import (
+    encode_image_as_base64
 )
 from controller.tagController import get_all_available_tags
 from controller.emailController import send_email
@@ -202,7 +203,7 @@ def create_job():
     if response["role"]=="Student":
         return jsonify({"error": "Student can't create job"})
     try:
-        response = create_job_(connection_pool, request, response['id'])
+        response = create_job_(connection_pool, request, response['id'], app.config['UPLOAD_FOLDER'])
         return response
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error creating job: {err}")
@@ -213,7 +214,10 @@ def create_job():
 def get_jobs():
     try:
         response = get_all_jobs(connection_pool, request)
-        return response
+        for job in response["data"]:
+            if not(job["image"] == None or job["image"] == "NULL"):
+                job["image"] = encode_image_as_base64("uploads/"+job["image"])
+        return jsonify(response)
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving jobs: {err}")
 
@@ -223,7 +227,10 @@ def get_jobs():
 def get_job_information():
     try:
         response = get_job_by_id(connection_pool, request, handle_bad_request)
-        return response
+        print(response)
+        if not(response["image"] == None or response["image"] == "NULL"):
+            response["image"] = encode_image_as_base64("uploads/"+response["image"])
+        return jsonify(response)
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving job: {err}")
 
@@ -235,7 +242,7 @@ def update_job():
     if response == "Invalid token":
         return jsonify({"error": response})
     try:
-        response = update_job_by_id(connection_pool, request, response["id"])
+        response = update_job_by_id(connection_pool, request, response["id"], app.config['UPLOAD_FOLDER'])
         return response
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error updating job: {err}")

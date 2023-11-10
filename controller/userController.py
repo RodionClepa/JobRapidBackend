@@ -4,8 +4,12 @@ from datetime import datetime
 import bcrypt
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
-import os
 from controller.tagController import get_tags_for_job
+
+from controller.imageController import (
+    upload_avatar,
+    delete_avatar
+)
 
 def register_user(connection_pool, request, folder_name):
     first_name = request.form.get('first_name')
@@ -115,17 +119,6 @@ def get_info(connection_pool, user_id):
         }
     except mysql.connector.Error as e:
         return jsonify({"Error" : f"{e}"})
-
-def delete_avatar(filename, folder_name):
-    try:
-        file_path = os.path.join(folder_name, filename)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            return {"message": "Image deleted successfully"}
-        else:
-            return {"error": "File not found"}
-    except Exception as e:
-        return {"error": str(e)}
 
 
 def update_user(connection_pool, request, id, role, folder_name):
