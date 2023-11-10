@@ -80,14 +80,10 @@ def get_info_handler():
     if response == "Invalid token":
         return jsonify({"error": response})
     response = get_info(connection_pool, response["id"])
-#     response["avatar"] = encode_image_as_base64("uploads/"+response["avatar"])
+    if(response == None or response == "NULL"):
+        return response
+    response["avatar"] = encode_image_as_base64("uploads/"+response["avatar"])
     return response
-
-
-def encode_image_as_base64(image_path):
-    with open(image_path, 'rb') as image_file:
-        encoded_image = base64.b64encode(image_file.read()).decode('utf-8')
-    return encoded_image
 
 
 @app.route("/api/users/update", methods=['PUT'])

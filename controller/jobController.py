@@ -18,20 +18,26 @@ def create_job_(connection_pool, request, user_id):
     job_phone = request.form.get('job_phone')
     tag_ids = request.form.get('tags')
 
+    filename = request.files.get('image')
+    filename = upload_avatar(filename, folder_name)
+
     # Insert the job data into the database
     sql = """
                 INSERT INTO jobs (job_title, job_description, location, salary, application_deadline, job_email, job_phone, user_id, created)
                 VALUES (%s, %s, %s, %s, STR_TO_DATE(%s, '%d-%m-%Y'), %s, %s, %s, %s)
             """
     values = (job_title, job_description, location, salary, application_deadline, job_email, job_phone, user_id, datetime.now())    
+    
     db = connection_pool.get_connection()
     mycursor = db.cursor()
+
     mycursor.execute(sql, values)
     sql = "SELECT LAST_INSERT_ID()"
     mycursor.execute(sql)
     job_id = mycursor.fetchone()[0]
     print(job_id)
     db.commit()
+
     mycursor.close()
     db.close()
 
@@ -47,7 +53,7 @@ def get_all_jobs(connection_pool, request):
     job_title = request.args.get('job_title', default="", type=str)
     records_per_page = 10
     list_of_available_criterias = ["job_title", "application_deadline", "created"]
-
+    
     if order.upper() != "DESC" and order.upper() != "ASC":
         return jsonify({"error":"Invalid order use DESC/ASC"})
     
