@@ -130,7 +130,6 @@ def get_job_by_id(connection_pool, request, handle_bad_request):
         db.close()
         return handle_bad_request("Job not found")
 
-# TODO MIHAI
 def update_job_by_id(connection_pool, request, user_id, folder_name):
         # Update the job data in the database
         job_id = request.args.get('job_id', default=1, type=int)
@@ -140,7 +139,13 @@ def update_job_by_id(connection_pool, request, user_id, folder_name):
         mycursor.execute(f"SELECT user_id, image FROM jobs WHERE job_id={job_id}")
         result = mycursor.fetchone()
         if result and result[0] == user_id:
-            req = forms_request()
+            req, null_fields = forms_request()
+            if null_fields:
+                missing_fields = ", ".join(null_fields)
+                if len(null_fields) > 1:
+                    return jsonify({"error": f"{missing_fields} fields are missing!"})
+                else:
+                    return jsonify({"error": f"{missing_fields} field is missing!"})
             if result[1] != req["filename"]:
                 delete_avatar(result[1], folder_name)
                 req["filename"] = upload_avatar(req["filename"], folder_name)
@@ -185,15 +190,22 @@ def delete_job_by_id(connection_pool, request, user_id):
         db.close()
         return jsonify({"error": "User doesn't own this job"})
 
+
 def forms_request():
     request_values = {}
-    request_values["job_title"] = request.form.get("job_title")
-    request_values["job_description"] = request.form.get("job_description")
-    request_values["location"] = request.form.get("location")
-    request_values["salary"] = request.form.get("salary")
-    request_values["application_deadline"] = request.form.get("application_deadline")
-    request_values["job_email"] = request.form.get("job_email")
-    request_values["job_phone"] = request.form.get("job_phone")
+    null_fields = []
+    fields_to_check = ["job_title", "job_description", "location", "salary", "application_deadline", "job_email", "job_phone"]
     request_values["tag_ids"] = request.form.get("tags")
-    request_values["filename"] = request.files.get('image')
-    return request_values
+
+    for field in fields_to_check:
+        value = request.form.get(field)
+        if value is not None:
+            request_values[field] = value
+        else:
+            request_values[field] = None
+            null_fields.append(field)
+
+    request_values['filename'] = request.files.get('image')
+
+    return request_values, null_fields
+
