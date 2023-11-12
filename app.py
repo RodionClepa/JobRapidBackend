@@ -44,7 +44,7 @@ connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
                                                   host='localhost',
                                                   database='jobrapid',
                                                   user='root',
-                                                  password='radu')
+                                                  password='sql123')
 
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
@@ -228,8 +228,8 @@ def get_job_information():
     try:
         response = get_job_by_id(connection_pool, request, handle_bad_request)
         print(response)
-        if not(response["image"] == None or response["image"] == "NULL"):
-            response["image"] = encode_image_as_base64("uploads/"+response["image"])
+        if not(response['image'] is None or response['image'] == "NULL"):
+            response['image'] = encode_image_as_base64("uploads/"+response["image"])
         return jsonify(response)
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving job: {err}")

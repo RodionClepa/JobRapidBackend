@@ -145,13 +145,18 @@ def update_job_by_id(connection_pool, request, user_id, folder_name):
                 delete_avatar(result[1], folder_name)
                 req["filename"] = upload_avatar(req["filename"], folder_name)
             sql = """
-            UPDATE jobs
-            SET job_title = %s, job_description = %s, location = %s, salary = %s,
-                application_deadline = STR_TO_DATE(%s, '%d-%m-%Y'), job_email = %s, job_phone = %s, image = %s
-            WHERE job_id = %s and user_id=%s
-            """
-            values = (req["job_title"], req["job_description"], req["location"], req["salary"], req["application_deadline"], req["job_email"], req["job_phone"], req["filename"], job_id,user_id)
-            mycursor.execute(sql, values)
+                        UPDATE jobs
+                        SET job_title = %(job_title)s, job_description = %(job_description)s, location = %(location)s, salary = %(salary)s,
+                            application_deadline = STR_TO_DATE(%(application_deadline)s, '%d-%m-%Y'), job_email = %(job_email)s, job_phone = %(job_phone)s, image = %(image)s
+                        WHERE job_id = %(job_id)s and user_id = %(user_id)s
+                        """
+            #values = (req["job_title"], req["job_description"], req["location"], req["salary"], req["application_deadline"], req["job_email"], req["job_phone"], req["filename"], job_id,user_id)
+            #mycursor.execute(sql, values)
+            mycursor.execute(sql, {'job_title': req["job_title"], 'job_description': req["job_description"],
+                                   'location': req["location"], 'salary': req["salary"],
+                                   'application_deadline': req["application_deadline"],
+                                   'job_email': req["job_email"], 'job_phone': req["job_phone"],
+                                   'image': req["filename"], 'job_id': job_id, 'user_id': user_id, })
             db.commit()
             mycursor.close()
             db.close()
