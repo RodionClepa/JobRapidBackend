@@ -222,7 +222,7 @@ def get_jobs():
         return handle_bad_request(f"Error retrieving jobs: {err}")
 
 # GET: Retrieve a job by ID
-# http://127.0.0.1:5000/api/jobs/get/?job_id=120
+# http://127.0.0.1:5000/api/jobs/get?job_id=120
 @app.route("/api/jobs/get", methods=["GET"])
 def get_job_information():
     try:
@@ -232,7 +232,7 @@ def get_job_information():
         return handle_bad_request(f"Error retrieving job: {err}")
 
 # PUT: Update a job by ID
-# http://127.0.0.1:5000/api/jobs/put/?job_id=125
+# http://127.0.0.1:5000/api/jobs/put?job_id=125
 @app.route("/api/jobs/put", methods=["PUT"])
 def update_job():
     response = verify_handler()

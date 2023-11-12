@@ -118,7 +118,7 @@ def get_job_by_id(connection_pool, request, handle_bad_request):
         db.close()
         return handle_bad_request("Job not found")
 
-# TODO MIHAI
+# Updated to protect my from SQL injection, check by setting a parameter to ['; select * from jobs; --] parantheses not needed
 def update_job_by_id(connection_pool, request, user_id):
         # Update the job data in the database
         job_id = request.args.get('job_id', default=1, type=int)
@@ -130,13 +130,15 @@ def update_job_by_id(connection_pool, request, user_id):
         if result and result[0] == user_id:
             sql = """
             UPDATE jobs
-            SET job_title = %s, job_description = %s, location = %s, salary = %s,
-                application_deadline = STR_TO_DATE(%s, '%d-%m-%Y'), job_email = %s, job_phone = %s
-            WHERE job_id = %s and user_id=%s
+            SET job_title = %(job_title)s, job_description = %(job_description)s, location = %(location)s, salary = %(salary)s,
+                application_deadline = STR_TO_DATE(%(application_deadline)s, '%d-%m-%Y'), job_email = %(job_email)s, job_phone = %(job_phone)s
+            WHERE job_id = %(job_id)s and user_id = %(user_id)s
             """
             req = forms_request()
-            values = (req["job_title"], req["job_description"], req["location"], req["salary"], req["application_deadline"], req["job_email"], req["job_phone"],job_id,user_id)
-            mycursor.execute(sql, values)
+            # values = (req["job_title"], req["job_description"], req["location"], req["salary"], req["application_deadline"], req["job_email"], req["job_phone"],job_id,user_id)
+            mycursor.execute(sql, {'job_title' : req["job_title"], 'job_description' : req["job_description"],
+                                   'location' : req["location"], 'salary' : req["salary"], 'application_deadline' : req["application_deadline"],
+                                   'job_email' : req["job_email"], 'job_phone' : req["job_phone"], 'job_id' : job_id, 'user_id' : user_id,})
             db.commit()
             mycursor.close()
             db.close()
