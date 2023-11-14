@@ -27,6 +27,13 @@ from controller.jobController import (
 )
 from controller.tagController import get_all_available_tags
 from controller.emailController import send_email
+from controller.reviewController import (
+    create_review,
+    update_review_by_id,
+    get_reviews_by_id,
+    user_rating_count,
+    average_user_rating 
+)
 
 app = Flask(__name__)
 
@@ -281,6 +288,56 @@ def send_email_handler():
         return jsonify({"error": "Email was not sended"})
 
 
+@app.route("/api/reviews/create", methods=["POST"])
+def create_user_review():
+    response = verify_handler()
+    if response == "Invalid token":
+        return jsonify({"error": response})
+    try:
+        response = create_review(connection_pool, request, response["id"])
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error creating review: {err}")
+
+# PUT: Function to update the review of a user by user_id
+@app.route("/api/reviews/put", methods=["PUT"])
+def update_user_review_by_id():
+    response = verify_handler()
+    if response == "Invalid token":
+        return jsonify({"error": response})
+    try:
+        response = update_review_by_id(connection_pool, request, response["id"])
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error updating review: {err}")
+
+
+# GET: Function to get the number of reviews for a user by user_id
+@app.route("/api/reviews/get", methods=["GET"])
+def get_user_reviews():
+    try:
+        response = get_reviews_by_id(connection_pool, request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving jobs: {err}")
+
+# GET: Function to get the number of reviews for a user by user_id
+@app.route("/api/reviews/count", methods=["GET"])
+def get_user_rating_count():
+    try:
+        response = user_rating_count(connection_pool, request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving jobs: {err}")
+
+# GET: Function to get the average rating for a user
+@app.route("/api/reviews/average", methods=["GET"])
+def get_average_user_rating():
+    try:
+        response = average_user_rating(connection_pool, request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving jobs: {err}")
 
 if __name__ == "__main__":
     app.run(debug=True, use_debugger=False, use_reloader=False, threaded=True)
