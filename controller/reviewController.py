@@ -89,3 +89,38 @@ def update_review_by_id(connection_pool, request, user_id):
         db.close()
         mycursor.close()
         return jsonify(f"Error: {e}"), 400
+
+# Getting all the reviews of the user by the id
+def get_reviews_by_id(connection_pool, request):
+    db = connection_pool.get_connection()
+    mycursor = db.cursor()
+    user_referenced = request.args.get('user_referenced', default=None, type=int)
+
+    try:
+        mycursor.execute("SELECT COUNT(*) FROM jobrapid.reviews WHERE user_id_referenced = %s", (user_referenced,))
+        count = mycursor.fetchone()
+        if count[0] > 0:
+            review_list = []
+            mycursor.execute("SELECT * FROM jobrapid.reviews WHERE user_id_referenced = %s", (user_referenced,))
+            reviews = mycursor.fetchall()
+            for x in range(count[0]):
+                review_dict = {
+                    "user_id_posted": reviews[x][1],
+                    "rating": reviews[x][2],
+                    "review_message": reviews[x][3],
+                    "created": reviews[x][4]
+                }
+                review_list.append(review_dict)
+            db.close()
+            mycursor.close()
+            return jsonify(review_list), 201
+
+        else:
+            db.close()
+            mycursor.close()
+            return jsonify({"Error": f"User_referenced = {user_referenced} has no reviews"}), 400
+
+    except Exception as e:
+        db.close()
+        mycursor.close()
+        return jsonify(f"Error: {e}"), 400

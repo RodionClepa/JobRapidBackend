@@ -106,6 +106,18 @@ def update_user_review_by_id():
         return handle_bad_request(f"Error updating review: {err}")
 
 
+# GET: Function to get the number of reviews for a user by user_id
+from controller.reviewController import get_reviews_by_id
+@app.route("/api/reviews/get", methods=["GET"])
+def get_user_reviews():
+    try:
+        response = get_reviews_by_id(connection_pool, request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving jobs: {err}")
+
+        
+
 
 if __name__ == "__main__":
     app.run(debug=True, use_debugger=False, use_reloader=False, threaded=True)
