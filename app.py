@@ -126,7 +126,15 @@ def get_user_rating_count():
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving jobs: {err}")
 
-
+# GET: Function to get the average rating for a user
+from controller.reviewController import average_user_rating
+@app.route("/api/reviews/average", methods=["GET"])
+def get_average_user_rating():
+    try:
+        response = average_user_rating(connection_pool, request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving jobs: {err}")
 
 if __name__ == "__main__":
     app.run(debug=True, use_debugger=False, use_reloader=False, threaded=True)

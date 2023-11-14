@@ -156,3 +156,32 @@ def average_user_rating(connection_pool, request):
         print(f"Error: {e}"), 400
         return
 
+# Front end, show the number of reviews to the right of the review stars
+def user_rating_count(connection_pool, request):
+    db = connection_pool.get_connection()
+    mycursor = db.cursor()
+    user_referenced = request.args.get('user_referenced', default=None, type=int)
+    try:
+        query = """
+                    SELECT COUNT(rating)
+                    FROM jobrapid.reviews
+                    WHERE user_id_referenced = %s
+                """
+        mycursor.execute(query, (user_referenced,))
+        review_count = mycursor.fetchone()
+        if review_count and review_count[0] is not None:
+            review_count = int(review_count[0])
+            mycursor.close()
+            db.close()
+            return jsonify(review_count), 201
+
+        else:
+            mycursor.close()
+            db.close()
+            return jsonify({"Error": "No ratings found for that user"}), 400
+
+    except Exception as e:
+        db.close()
+        mycursor.close()
+        return jsonify(f"Error: {e}"), 400
+
