@@ -116,7 +116,16 @@ def get_user_reviews():
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving jobs: {err}")
 
-        
+# GET: Function to get the number of reviews for a user by user_id
+from controller.reviewController import user_rating_count
+@app.route("/api/reviews/count", methods=["GET"])
+def get_user_rating_count():
+    try:
+        response = user_rating_count(connection_pool, request)
+        return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error retrieving jobs: {err}")
+
 
 
 if __name__ == "__main__":

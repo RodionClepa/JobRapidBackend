@@ -124,3 +124,35 @@ def get_reviews_by_id(connection_pool, request):
         db.close()
         mycursor.close()
         return jsonify(f"Error: {e}"), 400
+
+# Front-end, show the average_user_rating of a user as stars (UI)
+def average_user_rating(connection_pool, request):
+    db = connection_pool.get_connection()
+    mycursor = db.cursor()
+    user_referenced = request.args.get('user_referenced', default=None, type=int)
+    try:
+        query = """
+                    SELECT AVG(rating)
+                    FROM jobrapid.reviews
+                    WHERE user_id_referenced = %s
+                """
+        mycursor.execute(query, (user_referenced,))
+        user_rating = mycursor.fetchone()
+        if user_rating and user_rating[0] is not None:
+            user_rating = float(user_rating[0])
+            mycursor.close()
+            db.close()
+            return jsonify(user_rating), 201
+
+        else:
+            mycursor.close()
+            db.close()
+            return jsonify({"message" : f"No user ratings found for user_referenced = {user_referenced}"}), 400
+
+
+    except Exception as e:
+        db.close()
+        mycursor.close()
+        print(f"Error: {e}"), 400
+        return
+
