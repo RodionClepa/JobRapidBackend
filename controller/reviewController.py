@@ -77,6 +77,18 @@ def update_review_by_id(connection_pool, request, user_id):
             WHERE review_id = %s AND user_id = %s
             """
         rating = request.form.get('rating')
+
+        try:
+            if int(rating) < 1 or int(rating) > 5 or not (isinstance(int(rating), int)):
+                db.close()
+                mycursor.close()
+                return jsonify({"error": "Invalid rating, it needs to be an integer between 1 and 5"}), 400
+
+        except ValueError:
+            db.close()
+            mycursor.close()
+            return jsonify({"error": "Invalid rating, it needs to be an integer between 1 and 5"}), 400
+
         review_message = request.form.get('review_message')
         values = (rating, review_message, review_id, user_id)
         mycursor.execute(sql, values)
