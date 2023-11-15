@@ -65,11 +65,11 @@ def register_user(connection_pool, request, folder_name):
     values = (first_name, last_name, email, phone, date_of_birth, address, gender, skills, hashed_password, datetime.now(), filename, role)
     mycursor.execute(sql, values)
     mycursor.close()
-    db.close()
     db.commit()
+    db.close()
     return {"message": "Successfully registered"}
 
-def generate_token(id,first_name, last_name, email, role):
+def generate_token(id, first_name, last_name, email, role):
     return create_access_token(identity={"id": id, "email": email,"first_name": first_name, "last_name": last_name, "role": role}, expires_delta=timedelta(days=30))
 
 
@@ -85,7 +85,7 @@ def login_user(connection_pool, request):
     result = mycursor.fetchone()
     mycursor.close()
     db.close()
-
+    
     if(result is None):
         return {"error": "Invalid credentials"}
     if(bcrypt.checkpw(password.encode('utf-8'), result[1].encode('utf-8'))):

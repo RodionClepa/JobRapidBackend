@@ -30,10 +30,12 @@ from controller.emailController import send_email
 from controller.reviewController import (
     create_review,
     update_review_by_id,
-    get_reviews_by_id,
-    user_rating_count,
-    average_user_rating 
+    get_reviews_by_id
 )
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 app = Flask(__name__)
 

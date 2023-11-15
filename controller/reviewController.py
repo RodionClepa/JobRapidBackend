@@ -9,7 +9,6 @@ def create_review(connection_pool, request, user_id):
     rating = request.form.get('rating')
     user_referenced = request.form.get('user_referenced')
     review_message = request.form.get('review_message')
-    
     try:
         user_referenced = int(user_referenced)
     except ValueError:
@@ -42,7 +41,7 @@ def create_review(connection_pool, request, user_id):
 
     mycursor.execute(f"SELECT COUNT(*) FROM jobrapid.reviews WHERE user_id_referenced={user_referenced} AND user_id={user_id}")
     value = mycursor.fetchone()
-    if value:
+    if value[0] != 0:
         db.close()
         mycursor.close()
         return jsonify({"error": "User already has a review for the referenced user"}), 400
@@ -92,7 +91,7 @@ def update_review_by_id(connection_pool, request, user_id):
     mycursor.execute(sql, (review_id, user_id))
     value = mycursor.fetchone()
     
-    if value is None:
+    if value[0] == 0:
         db.close()
         mycursor.close()
         return jsonify({"message": "User review not found."}), 400
@@ -146,12 +145,12 @@ def get_reviews_by_id(connection_pool, request):
         reviews = mycursor.fetchall()
         for review in reviews:
             review_dict = {
-                "user_id_posted": reviews[review][0],
-                "rating": reviews[review][1],
-                "review_message": reviews[review][2],
-                "created": reviews[review][3],
-                "first_name": reviews[review][4],
-                "last_name": reviews[review][5]
+                "user_id_posted": review[0],
+                "rating": review[1],
+                "review_message": review[2],
+                "created": review[3],
+                "first_name": review[4],
+                "last_name": review[5]
             }
             review_list.append(review_dict)
         db.close()
@@ -169,10 +168,10 @@ def average_user_rating(connection_pool, user_referenced):
     mycursor = db.cursor()
     try:
         sql = """
-                    SELECT AVG(rating)
-                    FROM jobrapid.reviews
-                    WHERE user_id_referenced = %s
-                """
+                SELECT AVG(rating)
+                FROM jobrapid.reviews
+                WHERE user_id_referenced = %s
+            """
         mycursor.execute(sql, (user_referenced,))
         user_rating = mycursor.fetchone()
         if user_rating and user_rating[0] is not None:
