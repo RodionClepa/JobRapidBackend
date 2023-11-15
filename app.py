@@ -50,7 +50,7 @@ connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
                                                   host='localhost',
                                                   database='jobrapid',
                                                   user='root',
-                                                  password='radu')
+                                                  password='test123')
 
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
