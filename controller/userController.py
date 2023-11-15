@@ -10,6 +10,12 @@ from werkzeug.utils import secure_filename
 import os
 from controller.tagController import get_tags_for_job
 
+from controller.reviewController import (
+    average_user_rating,
+    user_rating_count
+)
+
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 def allowed_file(filename):
     return '.' in filename and \
@@ -127,10 +133,44 @@ def get_info(connection_pool, user_id):
             "gender": result[6],
             "skills": result[7],
             "avatar": result[8],
-            "role": result[9]
+            "role": result[9],
+            "avg_rating": average_user_rating(connection_pool, user_id),
+            "rating_count": user_rating_count(connection_pool, user_id),
         }
     except mysql.connector.Error as e:
         return jsonify({"Error" : f"{e}"})
+
+def get_info_by_id(connection_pool, request):
+    try:
+        user_id = request.args.get('user_id', default=None,type=int)
+        if(user_id is None):
+            return jsonify({"error": "User id wasn't passed or isn't valid"})
+        db = connection_pool.get_connection()
+        mycursor = db.cursor()
+        mycursor.execute("SELECT first_name, last_name, email, phone, date_of_birth, address, gender, skills, avatar, role FROM user WHERE user_id=%s", (user_id,))
+        result = mycursor.fetchone()
+        mycursor.fetchall()
+        mycursor.close()
+        db.close()
+        if result is None:
+            return jsonify({"error": "User id is invalid"})
+        return {
+            "first_name": result[0],
+            "last_name": result[1],
+            "email": result[2],
+            "phone": result[3],
+            "date_of_birth": result[4],
+            "address": result[5],
+            "gender": result[6],
+            "skills": result[7],
+            "avatar": result[8],
+            "role": result[9],
+            "avg_rating": average_user_rating(connection_pool, user_id),
+            "rating_count": user_rating_count(connection_pool, user_id),
+        }
+    except mysql.connector.Error as e:
+        return jsonify({"Error" : f"{e}"})
+
 
 def delete_avatar(filename, folder_name):
     try:

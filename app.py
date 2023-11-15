@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_jwt_extended import JWTManager, get_jwt_identity, jwt_required
 import os
-import math
 from flask_cors import CORS
 import mysql.connector
 import base64
@@ -16,7 +15,8 @@ from controller.userController import (
     get_student_jobs,
     recruiter_get_applied_students,
     change_applied_status,
-    delete_student_apply
+    delete_student_apply,
+    get_info_by_id
 )
 from controller.jobController import (
     create_job_,
@@ -90,6 +90,10 @@ def get_info_handler():
 #     response["avatar"] = encode_image_as_base64("uploads/"+response["avatar"])
     return response
 
+@app.route("/api/users/getinfobyid", methods=['GET'])
+def get_info_by_id_handler():
+    response = get_info_by_id(connection_pool, request)
+    return response
 
 def encode_image_as_base64(image_path):
     with open(image_path, 'rb') as image_file:
@@ -317,24 +321,6 @@ def update_user_review_by_id():
 def get_user_reviews():
     try:
         response = get_reviews_by_id(connection_pool, request)
-        return response
-    except mysql.connector.Error as err:
-        return handle_bad_request(f"Error retrieving jobs: {err}")
-
-# GET: Function to get the number of reviews for a user by user_id
-@app.route("/api/reviews/count", methods=["GET"])
-def get_user_rating_count():
-    try:
-        response = user_rating_count(connection_pool, request)
-        return response
-    except mysql.connector.Error as err:
-        return handle_bad_request(f"Error retrieving jobs: {err}")
-
-# GET: Function to get the average rating for a user
-@app.route("/api/reviews/average", methods=["GET"])
-def get_average_user_rating():
-    try:
-        response = average_user_rating(connection_pool, request)
         return response
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error retrieving jobs: {err}")

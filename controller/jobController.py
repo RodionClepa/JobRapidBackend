@@ -1,5 +1,4 @@
 from flask import request, jsonify
-import mysql.connector
 from datetime import datetime
 import math
 

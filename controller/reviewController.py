@@ -1,13 +1,15 @@
-from flask import request, jsonify
-import mysql.connector
+from flask import jsonify
 from datetime import datetime
 
 # Backend, creating the review and posting it in the database
 def create_review(connection_pool, request, user_id):
     db = connection_pool.get_connection()
-    mycursor = db.cursor(buffered=True)
+
+    mycursor = db.cursor() #TODO NEED TO FIX
     rating = request.form.get('rating')
     user_referenced = int(request.form.get('user_referenced'))
+    review_message = request.form.get('review_message')
+
     mycursor.execute(f"SELECT 1 FROM user WHERE user_id = {user_referenced}")
     value = mycursor.fetchone()
 
@@ -38,8 +40,6 @@ def create_review(connection_pool, request, user_id):
         mycursor.close()
         return jsonify({"error": "Invalid rating, it needs to be an integer between 1 and 5"}), 400
 
-    review_message = request.form.get('review_message')
-
     try:
         sql = """
                 INSERT INTO jobrapid.reviews (user_id, rating, review_message, created, user_id_referenced)
@@ -63,7 +63,9 @@ def update_review_by_id(connection_pool, request, user_id):
     db = connection_pool.get_connection()
     mycursor = db.cursor()
     review_id = request.args.get('review_id', default=None, type=int)
+    rating = request.form.get('rating')
     mycursor.execute(f"SELECT * FROM jobrapid.reviews WHERE review_id={review_id} and user_id={user_id}")
+    
     value = mycursor.fetchone()
     if value is None:
         db.close()
@@ -76,9 +78,9 @@ def update_review_by_id(connection_pool, request, user_id):
             SET rating = %s, review_message = %s
             WHERE review_id = %s AND user_id = %s
             """
-        rating = request.form.get('rating')
 
         try:
+            #Again check
             if int(rating) < 1 or int(rating) > 5 or not (isinstance(int(rating), int)):
                 db.close()
                 mycursor.close()
@@ -115,12 +117,12 @@ def get_reviews_by_id(connection_pool, request):
             review_list = []
             mycursor.execute("SELECT * FROM jobrapid.reviews WHERE user_id_referenced = %s", (user_referenced,))
             reviews = mycursor.fetchall()
-            for x in range(count[0]):
+            for review in reviews:
                 review_dict = {
-                    "user_id_posted": reviews[x][1],
-                    "rating": reviews[x][2],
-                    "review_message": reviews[x][3],
-                    "created": reviews[x][4]
+                    "user_id_posted": review[1],
+                    "rating": review[2],
+                    "review_message": review[3],
+                    "created": review[4]
                 }
                 review_list.append(review_dict)
             db.close()
@@ -138,41 +140,38 @@ def get_reviews_by_id(connection_pool, request):
         return jsonify(f"Error: {e}"), 400
 
 # Front-end, show the average_user_rating of a user as stars (UI)
-def average_user_rating(connection_pool, request):
+def average_user_rating(connection_pool, user_referenced):
     db = connection_pool.get_connection()
     mycursor = db.cursor()
-    user_referenced = request.args.get('user_referenced', default=None, type=int)
     try:
-        query = """
+        sql = """
                     SELECT AVG(rating)
                     FROM jobrapid.reviews
                     WHERE user_id_referenced = %s
                 """
-        mycursor.execute(query, (user_referenced,))
+        mycursor.execute(sql, (user_referenced,))
         user_rating = mycursor.fetchone()
         if user_rating and user_rating[0] is not None:
             user_rating = float(user_rating[0])
             mycursor.close()
             db.close()
-            return jsonify(user_rating), 201
+            return user_rating
 
         else:
             mycursor.close()
             db.close()
-            return jsonify({"message" : f"No user ratings found for user_referenced = {user_referenced}"}), 400
+            return None
 
 
     except Exception as e:
         db.close()
         mycursor.close()
-        print(f"Error: {e}"), 400
-        return
+        return None
 
 # Front end, show the number of reviews to the right of the review stars
-def user_rating_count(connection_pool, request):
+def user_rating_count(connection_pool, user_referenced):
     db = connection_pool.get_connection()
     mycursor = db.cursor()
-    user_referenced = request.args.get('user_referenced', default=None, type=int)
     try:
         query = """
                     SELECT COUNT(rating)
@@ -185,15 +184,14 @@ def user_rating_count(connection_pool, request):
             review_count = int(review_count[0])
             mycursor.close()
             db.close()
-            return jsonify(review_count), 201
+            return review_count
 
         else:
             mycursor.close()
             db.close()
-            return jsonify({"Error": "No ratings found for that user"}), 400
+            return None
 
     except Exception as e:
         db.close()
         mycursor.close()
-        return jsonify(f"Error: {e}"), 400
-
+        return None
