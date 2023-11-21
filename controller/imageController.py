@@ -9,7 +9,8 @@ def allowed_file(filename):
             filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def upload_avatar(file, folder_name):
-    if file == None  or file.filename == '':
+    if file is None  or file.filename == '':
+        print('IS NONE')
         filename = None
     elif allowed_file(file.filename):
         filename = secure_filename(str(uuid.uuid4()))+file.filename[file.filename.find("."):];

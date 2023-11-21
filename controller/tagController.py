@@ -5,7 +5,6 @@ def get_tags_for_job(connection_pool, job_id):
     result = mycursor.fetchall()
     mycursor.close()
     db.close()
-    print(result)
     tags = [{"tag_id":tag[0], "tag_name":tag[1]} for tag in result]
     return tags
 
@@ -47,7 +46,6 @@ def set_tags_to_job(connection_pool, job_id, tag_ids):
         mycursor.execute(f"SELECT COUNT(*) FROM tags WHERE tag_id = {tag_id}")
         check = mycursor.fetchone()[0]
         if check == 0:
-            print("No such tag id")
             mycursor.close()
             db.close()
             return

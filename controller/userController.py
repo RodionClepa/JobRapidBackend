@@ -5,16 +5,15 @@ import bcrypt
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
 from controller.tagController import get_tags_for_job
+import os
+from controller.imageController import (
+    upload_avatar,
+    delete_avatar
+)
 
 from controller.reviewController import (
     average_user_rating,
     user_rating_count
-)
-
-
-from controller.imageController import (
-    upload_avatar,
-    delete_avatar
 )
 
 def register_user(connection_pool, request, folder_name):
@@ -54,7 +53,6 @@ def register_user(connection_pool, request, folder_name):
     db.commit()
     mycursor.close()
     db.close()
-    db.commit()
     return {"message": "Successfully registered"}
 
 def generate_token(id, first_name, last_name, email, role):
@@ -113,6 +111,7 @@ def get_info(connection_pool, user_id):
 
 
         return {
+            "user_id": user_id,
             "first_name": result[0],
             "last_name": result[1],
             "email": result[2],
@@ -144,6 +143,7 @@ def get_info_by_id(connection_pool, request):
         if result is None:
             return jsonify({"error": "User id is invalid"})
         return {
+            "user_id": user_id,
             "first_name": result[0],
             "last_name": result[1],
             "email": result[2],
@@ -160,17 +160,6 @@ def get_info_by_id(connection_pool, request):
     except mysql.connector.Error as e:
         return jsonify({"Error" : f"{e}"})
 
-def delete_avatar(filename, folder_name):
-    try:
-        file_path = os.path.join(folder_name, filename)
-        if os.path.exists(file_path):
-            os.remove(file_path)
-            return {"message": "Image deleted successfully"}
-        else:
-            return {"error": "File not found"}
-    except Exception as e:
-        return {"error": str(e)}
-
 
 def update_user(connection_pool, request, id, role, folder_name):
     first_name = request.form.get('first_name')
@@ -181,11 +170,12 @@ def update_user(connection_pool, request, id, role, folder_name):
     address = request.form.get('address')
     gender = request.form.get('gender')
     skills = request.form.get('skills')
-    file = request.files['image']
+    print('+')
+    file = request.files.get('image')
+    print('-')
         
     if not(email and first_name and last_name and gender):
         return {"error": "Please fill in all fields"}
-
 
     try:
         db = connection_pool.get_connection()
@@ -193,7 +183,13 @@ def update_user(connection_pool, request, id, role, folder_name):
         mycursor.execute("SELECT first_name, last_name, email, phone, date_of_birth, address, gender, skills, avatar FROM user WHERE user_id=%s", (id,))
         result = mycursor.fetchone()
         image_name = result[8]
-        if(image_name!=file.filename):
+        if file is None:
+            filename = None
+        else:
+            filename = file.filename
+        
+        if(image_name!=filename):
+            print("WHY?")
             delete_avatar(image_name, folder_name)
             filename = upload_avatar(file, folder_name)
             sql = ("UPDATE user SET first_name=%s, last_name=%s, email=%s, phone=%s, date_of_birth=%s, address=%s, gender=%s, skills=%s, avatar=%s WHERE user_id = %s")
@@ -203,6 +199,7 @@ def update_user(connection_pool, request, id, role, folder_name):
             mycursor.close()
             db.close()
         else:
+            print('-----------')
             sql = ("UPDATE user SET first_name=%s, last_name=%s, email=%s, phone=%s, date_of_birth=%s, address=%s, gender=%s, skills=%s WHERE user_id = %s")
             values = (first_name, last_name, email, phone, date_of_birth, address, gender, skills, id)
             mycursor.execute(sql, values)
@@ -213,20 +210,6 @@ def update_user(connection_pool, request, id, role, folder_name):
     
     except mysql.connector.Error as err:
         return {"error": str(err)}
-
-
-def update_avatar_filename(connection_pool, id, filename):
-    sql = ("UPDATE user SET avatar=%s WHERE user_id=%s")
-    values = (filename, id)
-
-    db = connection_pool.get_connection()
-    mycursor = db.cursor()
-    mycursor.execute(sql, values)
-    db.commit()
-    mycursor.close()
-    db.close()
-    return {"message": "Successfully updated"}
-
 
 def student_apply(connection_pool, request, user_id):
     job_id = request.form.get("job_id")

@@ -74,7 +74,7 @@ def get_all_jobs(connection_pool, request):
     
     if criteria not in list_of_available_criterias:
         return jsonify({"error": "Invalid Criteria"})
-    
+
     mycursor.execute(f"SELECT job_id, created, job_title, application_deadline, job_description, salary, location, image FROM jobs WHERE job_title LIKE %s ORDER BY {criteria} {order} LIMIT {records_per_page} OFFSET %s", (f"%{job_title}%", (page_num-1)*10))
 
     column_names = [desc[0] for desc in mycursor.description]
@@ -99,9 +99,7 @@ def get_job_by_id(connection_pool, request, handle_bad_request):
     mycursor.execute("SELECT * FROM jobs WHERE job_id = %s", (job_id,))
     job_description = mycursor.description
     job = mycursor.fetchone()
-    # print(job)
     if job:
-
         column_names = [desc[0] for desc in job_description]
         job_dict = dict(zip(column_names, job))
         print("-==================")
@@ -126,7 +124,7 @@ def get_job_by_id(connection_pool, request, handle_bad_request):
     else:
         mycursor.close()
         db.close()
-        return handle_bad_request("Job not found")
+        return {"error": "Job not found"}
 
 def update_job_by_id(connection_pool, request, user_id, folder_name):
         # Update the job data in the database

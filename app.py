@@ -54,7 +54,7 @@ connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
                                                   host='localhost',
                                                   database='jobrapid',
                                                   user='root',
-                                                  password='test123')
+                                                  password='radu')
 
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)
@@ -99,6 +99,8 @@ def get_info_handler():
 @app.route("/api/users/getinfobyid", methods=['GET'])
 def get_info_by_id_handler():
     response = get_info_by_id(connection_pool, request)
+    if not(response['avatar'] is None or response['avatar'] == "NULL"):
+        response['avatar'] = encode_image_as_base64("uploads/"+response["avatar"])
     return response
 
 @app.route("/api/users/update", methods=['PUT'])
@@ -178,7 +180,7 @@ def recruiter_get_applied_students_handle():
         if "error" in response:
             return jsonify({"error": response["error"]})
         for res in response:
-            if(res["avatar"] != "NULL"):
+            if(res["avatar"] != "NULL" and res["avatar"] is not None):
                 res["avatar"] = encode_image_as_base64("uploads/"+res["avatar"])
         return response
     except mysql.connector.Error as err:
@@ -241,7 +243,8 @@ def get_jobs():
 def get_job_information():
     try:
         response = get_job_by_id(connection_pool, request, handle_bad_request)
-        print(response)
+        if "error" in response:
+            return jsonify(response)
         if not(response['image'] is None or response['image'] == "NULL"):
             response['image'] = encode_image_as_base64("uploads/"+response["image"])
         return jsonify(response)
