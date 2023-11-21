@@ -2,12 +2,8 @@ from flask import jsonify
 import mysql.connector
 from datetime import datetime
 import bcrypt
-import base64
 from flask_jwt_extended import create_access_token
 from datetime import timedelta
-import uuid
-from werkzeug.utils import secure_filename
-import os
 from controller.tagController import get_tags_for_job
 
 from controller.reviewController import (
@@ -16,21 +12,10 @@ from controller.reviewController import (
 )
 
 
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-def allowed_file(filename):
-    return '.' in filename and \
-            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def upload_avatar(file, folder_name):
-
-    if not file or file.filename == '':
-        filename = "NULL"
-    elif allowed_file(file.filename):
-        filename = secure_filename(str(uuid.uuid4()))+file.filename[file.filename.find("."):];
-        file.save(os.path.join(folder_name, filename))
-        return filename
-    else:
-        return {"error": "Invalid image format"}
+from controller.imageController import (
+    upload_avatar,
+    delete_avatar
+)
 
 def register_user(connection_pool, request, folder_name):
     first_name = request.form.get('first_name')
@@ -55,7 +40,9 @@ def register_user(connection_pool, request, folder_name):
     if checking_email[0]>0:
         return {"error": "Email has already been taken"}
 
-    filename = "NULL"
+    filename = request.files.get('image')
+    filename = upload_avatar(filename, folder_name)
+    # filename = "NULL"
 
     password_bytes = password.encode('utf-8')
     salt = bcrypt.gensalt(rounds=12)
@@ -64,9 +51,10 @@ def register_user(connection_pool, request, folder_name):
     sql = "INSERT INTO user (first_name, last_name, email, phone, date_of_birth, address, gender, skills, password, created, avatar, role) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     values = (first_name, last_name, email, phone, date_of_birth, address, gender, skills, hashed_password, datetime.now(), filename, role)
     mycursor.execute(sql, values)
-    mycursor.close()
     db.commit()
+    mycursor.close()
     db.close()
+    db.commit()
     return {"message": "Successfully registered"}
 
 def generate_token(id, first_name, last_name, email, role):
@@ -118,6 +106,7 @@ def get_info(connection_pool, user_id):
         mycursor = db.cursor()
         mycursor.execute("SELECT first_name, last_name, email, phone, date_of_birth, address, gender, skills, avatar, role FROM user WHERE user_id=%s", (user_id,))
         result = mycursor.fetchone()
+        print(result[8])
         mycursor.fetchall()
         mycursor.close()
         db.close()
@@ -170,7 +159,6 @@ def get_info_by_id(connection_pool, request):
         }
     except mysql.connector.Error as e:
         return jsonify({"Error" : f"{e}"})
-
 
 def delete_avatar(filename, folder_name):
     try:
