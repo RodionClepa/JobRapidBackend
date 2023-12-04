@@ -344,9 +344,13 @@ def recruiter_get_applied_students(connection_pool, request,user_id):
     mycursor.execute(sql, values)
     check = mycursor.fetchone()
     if check is None:
+        mycursor.close()
+        db.close()
         return {"error": "No such job or user didn't create this job"}
 
     if check[0] < 1:
+        mycursor.close()
+        db.close()
         return {"error": "No such job or user didn't create this job"}
 
     
@@ -419,3 +423,37 @@ def change_applied_status(connection_pool, request, user_id):
     db.close()
 
     return {"message": "Successfully changed status"}
+
+def recruiter_delete_job(connection_pool, request, user_id):
+    job_id = request.args.get('job_id', type=int)
+    if job_id is None:
+        return {"error": "Should receive job_id"}
+    sql = "SELECT count(*) FROM jobs WHERE user_id = %s AND job_id = %s;"
+    values = (user_id, job_id)
+
+    db = connection_pool.get_connection()
+    mycursor = db.cursor()
+    mycursor.execute(sql, values)
+    check = mycursor.fetchone()
+    if check is None:
+        mycursor.close()
+        db.close()
+        return {"error": "No such job or user didn't create this job"}
+
+    if check[0] < 1:
+        mycursor.close()
+        db.close()
+        return {"error": "No such job or user didn't create this job"}
+    
+    sql = '''DELETE FROM jobs_tags WHERE job_id=%s'''
+    values = (job_id,)
+    mycursor.execute(sql, values)
+    db.commit()
+
+    sql = '''DELETE FROM jobs WHERE job_id=%s'''
+    values = (job_id,)
+    mycursor.execute(sql, values)
+    db.commit()
+    mycursor.close()
+    db.close()
+    return {"message":"Job successfully deleted"}

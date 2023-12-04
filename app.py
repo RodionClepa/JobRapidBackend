@@ -15,7 +15,8 @@ from controller.userController import (
     recruiter_get_applied_students,
     change_applied_status,
     delete_student_apply,
-    get_info_by_id
+    get_info_by_id,
+    recruiter_delete_job
 )
 from controller.jobController import (
     create_job_,
@@ -183,6 +184,23 @@ def recruiter_get_applied_students_handle():
             if(res["avatar"] != "NULL" and res["avatar"] is not None):
                 res["avatar"] = encode_image_as_base64("uploads/"+res["avatar"])
         return response
+    except mysql.connector.Error as err:
+        return handle_bad_request(f"Error creating job: {err}")
+    
+#http://127.0.0.1:5000/api/users/deletejob?job_id=127
+@app.route("/api/users/deletejob", methods=['DELETE'])
+def recruiter_delete_job_handle():
+    response = verify_handler()
+    if response == "Invalid token":
+        return jsonify({"error": response})
+    if response["role"]=="Student":
+        return jsonify({"error": "Student can't use this option"})
+    try:
+        print("1")
+        response = recruiter_delete_job(connection_pool, request, response['id'])
+        if "error" in response:
+            return jsonify({"error": response["error"]})
+        return jsonify(response)
     except mysql.connector.Error as err:
         return handle_bad_request(f"Error creating job: {err}")
 

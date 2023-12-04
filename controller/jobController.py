@@ -21,7 +21,7 @@ def create_job_(connection_pool, request, user_id, folder_name):
     job_email = request.form.get('job_email')
     job_phone = request.form.get('job_phone')
     tag_ids = request.form.get('tags')
-
+    print (request.form)
     filename = request.files.get('image')
     filename = upload_avatar(filename, folder_name)
 
