@@ -115,7 +115,8 @@ def get_info_handler():
     response = get_info(connection_pool, response["id"])
     if(response == None or response == "NULL"):
         return response
-    response["avatar"] = encode_image_as_base64("uploads/"+response["avatar"])
+    if not(response['avatar'] is None or response['avatar'] == "NULL"):
+        response['avatar'] = encode_image_as_base64("uploads/"+response["avatar"])
     return response
 
 @app.route("/api/users/getinfobyid", methods=['GET'])
