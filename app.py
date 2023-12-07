@@ -49,13 +49,34 @@ import mysql.connector.pooling
 
 from mysql.connector import pooling
 
-connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
-                                                  pool_size=32,
-                                                  pool_reset_session=True,
-                                                  host='localhost',
-                                                  database='jobrapid',
-                                                  user='root',
-                                                  password='radu')
+production = True
+
+if production is False:
+    connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",
+        pool_size=32,
+        pool_reset_session=True,
+        host='localhost',
+        database='jobrapid',
+        user='root',
+        password='radu')
+else:
+    db_host = os.getenv("DB_HOST")
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+    db_port = os.getenv("DB_PORT")
+    db_name = os.getenv("DB_NAME")
+
+    connection_pool = pooling.MySQLConnectionPool(
+        pool_name="pynative_pool",
+        pool_size=32,
+        pool_reset_session=True,
+        host=db_host,
+        database=db_name,
+        user=db_user,
+        password=db_password,
+        port=int(db_port),
+    )
+
 
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 jwt = JWTManager(app)

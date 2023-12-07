@@ -1,7 +1,8 @@
 def get_tags_for_job(connection_pool, job_id):
     db = connection_pool.get_connection()
     mycursor = db.cursor()
-    mycursor.execute(f"SELECT t.tag_id, t.tag_name FROM tags AS t INNER JOIN jobs_tags AS J ON t.tag_id = j.tag_id WHERE job_id = {job_id}")
+    print(job_id)
+    mycursor.execute(f"SELECT t.tag_id, t.tag_name FROM tags AS t INNER JOIN jobs_tags AS j ON t.tag_id = j.tag_id WHERE j.job_id = {job_id}")
     result = mycursor.fetchall()
     mycursor.close()
     db.close()
