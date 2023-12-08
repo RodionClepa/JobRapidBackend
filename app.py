@@ -49,7 +49,7 @@ import mysql.connector.pooling
 
 from mysql.connector import pooling
 
-production = True
+production = False
 
 if production is False:
     connection_pool = pooling.MySQLConnectionPool(pool_name="pynative_pool",

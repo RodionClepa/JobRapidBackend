@@ -53,9 +53,8 @@ def create_job_(connection_pool, request, user_id, folder_name):
 def get_all_jobs(connection_pool, request):
     criteria = request.args.get('criteria', default='created', type=str)
     order = request.args.get('order', default="ASC", type=str)
-    page_num = request.args.get('page_num', default=1, type=int)
     job_title = request.args.get('job_title', default="", type=str)
-    records_per_page = 10
+    tag_id = request.args.get('tag_id', default=None, type=int)
     list_of_available_criterias = ["job_title", "application_deadline", "created"]
     
     if order.upper() != "DESC" and order.upper() != "ASC":
@@ -63,19 +62,14 @@ def get_all_jobs(connection_pool, request):
     
     db = connection_pool.get_connection()
     mycursor = db.cursor()
-    mycursor.execute("SELECT COUNT(*) FROM jobs WHERE job_title LIKE %s", (f"%{job_title}%",))
-        
-    total_records = mycursor.fetchone()[0]
-    # mycursor.fetchall()
-
-    total_pages = math.ceil(total_records/records_per_page)
-    if(total_pages<page_num):
-        return jsonify({"error":"Invalid page number"})
     
     if criteria not in list_of_available_criterias:
         return jsonify({"error": "Invalid Criteria"})
 
-    mycursor.execute(f"SELECT job_id, created, job_title, application_deadline, job_description, salary, location, image FROM jobs WHERE job_title LIKE %s ORDER BY {criteria} {order} LIMIT {records_per_page} OFFSET %s", (f"%{job_title}%", (page_num-1)*10))
+    if tag_id is None:
+        mycursor.execute(f"SELECT job_id, created, job_title, application_deadline, job_description, salary, location, image FROM jobs WHERE job_title LIKE %s ORDER BY {criteria} {order}", (f"%{job_title}%", ))
+    else:
+        mycursor.execute(f"SELECT a.job_id, a.created, a.job_title, a.application_deadline, a.job_description, a.salary, a.location, a.image FROM jobs AS a WHERE job_title LIKE %s AND %s IN (SELECT tag_id FROM jobs_tags WHERE job_id = a.job_id) ORDER BY {criteria} {order}", (f"%{job_title}%", tag_id))
 
     column_names = [desc[0] for desc in mycursor.description]
     result = [dict(zip(column_names, row)) for row in mycursor.fetchall()]
@@ -86,9 +80,7 @@ def get_all_jobs(connection_pool, request):
         job["tags"] = get_tags_for_job(connection_pool, job["job_id"])
 
     return {
-        "data": result,
-        "total_pages": total_pages,
-        "current_page": page_num
+        "data": result
     }
 
 def get_job_by_id(connection_pool, request, handle_bad_request):
