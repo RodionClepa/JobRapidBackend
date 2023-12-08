@@ -294,7 +294,7 @@ def get_student_jobs(connection_pool, user_id):
     return jobs_list
 
 def delete_student_apply(connection_pool, user_id, request):
-    job_id = request.form.get("job_id")
+    job_id = request.args.get('job_id', default = None, type=int)
 
     sql = "SELECT COUNT(*) FROM jobs WHERE job_id = %s"
     values = (job_id,)
